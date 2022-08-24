@@ -29,12 +29,12 @@ module.exports.createCard = (req, res) => {
 };
 
 module.exports.deleteCard = (req, res) => {
-  Card.findByIdAndRemove(req.params.cardId)
+  Card.findByIdAndDelete(req.params.cardId)
     .then((card) => {
       if (card) {
         return res.status(404).send({ message: 'Карточка не найдена' });
       }
-      return res.status(200).send(card);
+      return res.send({ card });
     })
     .catch((err) => {
       if (err.name === 'CastError') {
