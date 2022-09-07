@@ -1,23 +1,18 @@
+/* eslint-disable import/no-unresolved */
 /* eslint-disable no-console */
 // app.js — входной файл
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
 
 const { PORT = 3000 } = process.env;
 
 const app = express();
 
-app.use((req, res, next) => {
-  req.user = {
-    _id: '630332513ed5079d05f09aed',
-  };
-
-  next();
-});
-
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cookieParser());
 app.use('/cards', require('./routes/cards'));
 app.use('/users', require('./routes/users'));
 
