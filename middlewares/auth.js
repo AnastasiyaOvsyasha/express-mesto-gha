@@ -1,4 +1,3 @@
-// eslint-disable-next-line import/no-unresolved
 const jwt = require('jsonwebtoken');
 const AuthorizationError = require('../errors/AuthorisationError');
 
