@@ -3,14 +3,12 @@ const userRouter = require('express').Router();
 const { celebrate, Joi } = require('celebrate');
 
 const {
-  createUser,
   getUsers,
   getUserId,
   editUserProfile,
   updateUserAvatar,
 } = require('../controllers/users');
 
-userRouter.post('/', createUser);
 userRouter.get('/', getUsers);
 userRouter.get(
   '/:userId',

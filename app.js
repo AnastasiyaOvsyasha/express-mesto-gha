@@ -5,6 +5,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
+const { createUser, login } = require('./controllers/users');
 
 const { PORT = 3000 } = process.env;
 
@@ -19,6 +20,8 @@ app.use('/users', require('./routes/users'));
 app.use('/', (req, res) => {
   res.status(404).send({ message: 'Страница не найдена' });
 });
+app.post('/signin', login);
+app.post('/signup', createUser);
 
 // подключаемся к серверу mongo
 mongoose.connect('mongodb://localhost:27017/mestodb', {
