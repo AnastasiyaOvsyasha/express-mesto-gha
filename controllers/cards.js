@@ -3,13 +3,14 @@ const Card = require('../models/cards');
 const ErrorBadRequest = require('../errors/ErrorBadRequest');
 const ErrorNotFound = require('../errors/ErrorNotFound');
 const ForbiddenError = require('../errors/ForbiddenError');
+const ErrorServer = require('../errors/ErrorServer');
 
 module.exports.getCards = (req, res, next) => {
   Card.find({})
     .then((cards) => {
       res.send(cards);
     })
-    .catch(next);
+    .catch(() => next(new ErrorServer('Произошла ошибка')));
 };
 
 module.exports.createCard = (req, res, next) => {
@@ -25,7 +26,7 @@ module.exports.createCard = (req, res, next) => {
           ),
         );
       }
-      return next(err);
+      return next(new ErrorServer('Произошла ошибка'));
     });
 };
 
@@ -43,7 +44,12 @@ module.exports.deleteCard = (req, res, next) => {
         });
       }
     })
-    .catch(next);
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        return next(new ErrorBadRequest('Данные переданы некорректно'));
+      }
+      return next(err);
+    });
 };
 
 module.exports.likeCard = (req, res, next) => {
@@ -62,7 +68,7 @@ module.exports.likeCard = (req, res, next) => {
       if (err.name === 'CastError' || err.name === 'ValidationError') {
         return next(new ErrorBadRequest('Данные переданы некорректно'));
       }
-      return next(err);
+      return next(new ErrorServer('Произошла ошибка'));
     });
 };
 
@@ -82,6 +88,6 @@ module.exports.dislikeCard = (req, res, next) => {
       if (err.name === 'CastError' || err.name === 'ValidationError') {
         return next(new ErrorBadRequest('Данные переданы некорректно'));
       }
-      return next(err);
+      return next(new ErrorServer('Произошла ошибка'));
     });
 };

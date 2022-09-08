@@ -5,11 +5,12 @@ const User = require('../models/users');
 const ErrorBadRequest = require('../errors/ErrorBadRequest');
 const ErrorNotFound = require('../errors/ErrorNotFound');
 const ErrorConflict = require('../errors/ErrorConflict');
+const ErrorServer = require('../errors/ErrorServer');
 
 module.exports.getUsers = (req, res, next) => {
   User.find({})
     .then((users) => res.send({ data: users }))
-    .catch(next);
+    .catch(() => next(new ErrorServer('Произошла ошибка')));
 };
 
 module.exports.createUser = (req, res, next) => {
@@ -37,7 +38,7 @@ module.exports.createUser = (req, res, next) => {
       } else if (err.code === 11000) {
         next(new ErrorConflict('Данный email уже зарегестрирован'));
       }
-      next(err);
+      return next(new ErrorServer('Произошла ошибка'));
     });
 };
 
@@ -48,7 +49,16 @@ module.exports.getUserId = (req, res, next) => {
         next(new ErrorNotFound('Пользователь не найден'));
       } else res.send(user);
     })
-    .catch(next);
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        return next(
+          new ErrorBadRequest(
+            'Переданы некорректные данные при обновлении профиля',
+          ),
+        );
+      }
+      return next(new ErrorServer('Произошла ошибка'));
+    });
 };
 
 module.exports.editUserProfile = (req, res, next) => {
@@ -60,18 +70,20 @@ module.exports.editUserProfile = (req, res, next) => {
     { new: true, runValidators: true },
   )
     .then((user) => {
-      res.send({ user });
+      if (!user) {
+        throw new ErrorNotFound('Пользователь не найден');
+      }
+      return res.send({ data: user });
     })
     .catch((err) => {
       if (err.name === 'CastError' || err.name === 'ValidationError') {
-        next(
+        return next(
           new ErrorBadRequest(
-            'Переданы некорректные данные при обновлении профиля',
+            'При создании пользователя переданы некорректные данные',
           ),
         );
-      } else {
-        next(err);
       }
+      return next(new ErrorServer('Произошла ошибка'));
     });
 };
 
@@ -85,18 +97,13 @@ module.exports.updateUserAvatar = (req, res, next) => {
     .then((user) => {
       if (!user) {
         next(new ErrorNotFound('Пользователь не найден.'));
-      } else res.send(user);
+      } else res.send({ data: user });
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        next(
-          new ErrorBadRequest(
-            'При обновлении аватара данные переданы некорректно',
-          ),
-        );
-      } else {
-        next(err);
+        return next(new ErrorBadRequest('При обновлении аватара данные переданы некорректно'));
       }
+      return next(new ErrorServer('Произошла ошибка'));
     });
 };
 
@@ -109,8 +116,11 @@ module.exports.login = (req, res, next) => {
       res.cookie('jwt', token, {
         maxAge: 3600000 * 24 * 7,
         httpOnly: true,
+        sameSite: true,
       });
-      res.send({ data: token });
+      res.send({ data: user.toJSON() });
     })
-    .catch(next);
+    .catch(() => {
+      next(new ErrorServer('Произошла ошибка'));
+    });
 };
