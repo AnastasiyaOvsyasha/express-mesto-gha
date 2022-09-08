@@ -1,21 +1,18 @@
 const Card = require('../models/cards');
-
-const ErrorBadRequest = require('../errors/ErrorBadRequest');
-const ErrorNotFound = require('../errors/ErrorNotFound');
-const ForbiddenError = require('../errors/ForbiddenError');
-const ErrorServer = require('../errors/ErrorServer');
+const ErrorBadRequest = require('../errors/constants/ErrorBadRequest');
+const ErrorNotFound = require('../errors/constants/ErrorNotFound');
+const ForbiddenError = require('../errors/constants/ForbiddenError');
 
 module.exports.getCards = (req, res, next) => {
   Card.find({})
     .then((cards) => {
       res.send(cards);
     })
-    .catch(() => next(new ErrorServer('Произошла ошибка')));
+    .catch(next);
 };
 
 module.exports.createCard = (req, res, next) => {
   const { name, link, owner = req.user._id } = req.body;
-
   Card.create({ name, link, owner })
     .then((card) => res.send({ card }))
     .catch((err) => {
@@ -26,7 +23,7 @@ module.exports.createCard = (req, res, next) => {
           ),
         );
       }
-      return next(new ErrorServer('Произошла ошибка'));
+      return next(err);
     });
 };
 
@@ -68,7 +65,7 @@ module.exports.likeCard = (req, res, next) => {
       if (err.name === 'CastError' || err.name === 'ValidationError') {
         return next(new ErrorBadRequest('Данные переданы некорректно'));
       }
-      return next(new ErrorServer('Произошла ошибка'));
+      return next(err);
     });
 };
 
@@ -88,6 +85,6 @@ module.exports.dislikeCard = (req, res, next) => {
       if (err.name === 'CastError' || err.name === 'ValidationError') {
         return next(new ErrorBadRequest('Данные переданы некорректно'));
       }
-      return next(new ErrorServer('Произошла ошибка'));
+      return next(err);
     });
 };

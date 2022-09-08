@@ -1,23 +1,20 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/users');
-
-const ErrorBadRequest = require('../errors/ErrorBadRequest');
-const ErrorNotFound = require('../errors/ErrorNotFound');
-const ErrorConflict = require('../errors/ErrorConflict');
-const ErrorServer = require('../errors/ErrorServer');
+const ErrorBadRequest = require('../errors/constants/ErrorBadRequest');
+const ErrorNotFound = require('../errors/constants/ErrorNotFound');
+const ErrorConflict = require('../errors/constants/ErrorConflict');
 
 module.exports.getUsers = (req, res, next) => {
   User.find({})
     .then((users) => res.send({ data: users }))
-    .catch(() => next(new ErrorServer('Произошла ошибка')));
+    .catch(next);
 };
 
 module.exports.createUser = (req, res, next) => {
   const {
     name, about, avatar, email, password,
   } = req.body;
-
   bcrypt
     .hash(password, 10)
     .then((hash) => User.create({
@@ -38,7 +35,7 @@ module.exports.createUser = (req, res, next) => {
       } else if (err.code === 11000) {
         next(new ErrorConflict('Данный email уже зарегестрирован'));
       }
-      return next(new ErrorServer('Произошла ошибка'));
+      return next(err);
     });
 };
 
@@ -57,13 +54,12 @@ module.exports.getUserId = (req, res, next) => {
           ),
         );
       }
-      return next(new ErrorServer('Произошла ошибка'));
+      return next(err);
     });
 };
 
 module.exports.editUserProfile = (req, res, next) => {
   const { name, about } = req.body;
-
   User.findByIdAndUpdate(
     req.user._id,
     { name, about },
@@ -83,7 +79,7 @@ module.exports.editUserProfile = (req, res, next) => {
           ),
         );
       }
-      return next(new ErrorServer('Произошла ошибка'));
+      return next(err);
     });
 };
 
@@ -101,15 +97,18 @@ module.exports.updateUserAvatar = (req, res, next) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return next(new ErrorBadRequest('При обновлении аватара данные переданы некорректно'));
+        return next(
+          new ErrorBadRequest(
+            'При обновлении аватара данные переданы некорректно',
+          ),
+        );
       }
-      return next(new ErrorServer('Произошла ошибка'));
+      return next(err);
     });
 };
 
 module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
-
   User.findUserByCredentials(email, password)
     .then((user) => {
       const token = jwt.sign({ _id: user._id }, 'secret-key');
@@ -120,7 +119,5 @@ module.exports.login = (req, res, next) => {
       });
       res.send({ data: user.toJSON() });
     })
-    .catch(() => {
-      next(new ErrorServer('Произошла ошибка'));
-    });
+    .catch(next);
 };

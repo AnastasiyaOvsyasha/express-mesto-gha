@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const { AuthorizationError } = require('../errors/AuthorisationError');
+const validator = require('validator');
+const { AuthError } = require('../errors/constants/AuthError');
+const { PrfctUrlRegex } = require('../errors/constants/utils');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -22,8 +24,13 @@ const userSchema = new mongoose.Schema({
     required: true,
     default:
       'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
+    validate: {
+      validator(v) {
+        return PrfctUrlRegex.test(v);
+      },
+      message: 'Ошибка валидации url адреса',
+    },
   },
-
   password: {
     type: String,
     required: [true, 'Данное поле должно быть заполнено'],
@@ -33,15 +40,19 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Данное поле должно быть заполнено'],
     unique: true,
-    message: 'Введите корректный Email',
+    validate: {
+      validator(v) {
+        return validator.isEmail(v);
+      },
+      message: 'Введите корректный Email',
+    },
   },
 });
 
 userSchema.methods.toJSON = function fn() {
   const user = this.toObject();
-  return {
-    _id: user._id, name: user.name, about: user.about, avatar: user.avatar, email: user.email,
-  };
+  delete user.password;
+  return user;
 };
 
 userSchema.statics.findUserByCredentials = function fn(email, password) {
@@ -49,22 +60,15 @@ userSchema.statics.findUserByCredentials = function fn(email, password) {
     .select('+password')
     .then((user) => {
       if (!user) {
-        return Promise.reject(new AuthorizationError('Неправильные почта или пароль'));
+        return Promise.reject(new AuthError('Неправильные почта или пароль'));
       }
       return bcrypt.compare(password, user.password).then((matched) => {
         if (!matched) {
-          return Promise.reject(new AuthorizationError('Неправильные почта или пароль'));
+          return Promise.reject(new AuthError('Неправильные почта или пароль'));
         }
         return user;
       });
     });
 };
-
-const avatarValidator = function fn(value) {
-  const regex = /^https*:\/\/(www.)*[0-9a-zа-я.\-_~:/?[\]@!$&'()*+,;=]{1,}(#*$)/gi;
-  return regex.test(value);
-};
-
-userSchema.path('avatar').validate(avatarValidator, 'error');
 
 module.exports = mongoose.model('user', userSchema);

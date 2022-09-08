@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { PrfctUrlRegex } = require('../errors/constants/utils');
 
 const cardSchema = new mongoose.Schema({
   name: {
@@ -10,6 +11,12 @@ const cardSchema = new mongoose.Schema({
   link: {
     type: String,
     required: true,
+    validate: {
+      validator(v) {
+        return PrfctUrlRegex.test(v);
+      },
+      message: 'Неверный url, проверьте правильность ссылки',
+    },
   },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
