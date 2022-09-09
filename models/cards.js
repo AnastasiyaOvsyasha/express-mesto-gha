@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { PrfctUrlRegex } = require('../errors/constants/utils');
+const isURL = require('validator');
 
 const cardSchema = new mongoose.Schema({
   name: {
@@ -12,9 +12,7 @@ const cardSchema = new mongoose.Schema({
     type: String,
     required: true,
     validate: {
-      validator(v) {
-        return PrfctUrlRegex.test(v);
-      },
+      validator: (v) => isURL(v),
       message: 'Неверный url, проверьте правильность ссылки',
     },
   },
@@ -32,5 +30,4 @@ const cardSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
-
 module.exports = mongoose.model('card', cardSchema);

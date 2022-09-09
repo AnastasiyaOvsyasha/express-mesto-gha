@@ -1,9 +1,10 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/users');
-const ErrorBadRequest = require('../errors/constants/ErrorBadRequest');
-const ErrorNotFound = require('../errors/constants/ErrorNotFound');
-const ErrorConflict = require('../errors/constants/ErrorConflict');
+
+const ErrorBadRequest = require('../errors/ErrorBadRequest');
+const ErrorNotFound = require('../errors/ErrorNotFound');
+const ErrorConflict = require('../errors/ErrorConflict');
 
 module.exports.getUsers = (req, res, next) => {
   User.find({})
@@ -15,6 +16,7 @@ module.exports.createUser = (req, res, next) => {
   const {
     name, about, avatar, email, password,
   } = req.body;
+
   bcrypt
     .hash(password, 10)
     .then((hash) => User.create({
@@ -35,7 +37,7 @@ module.exports.createUser = (req, res, next) => {
       } else if (err.code === 11000) {
         next(new ErrorConflict('Данный email уже зарегестрирован'));
       }
-      return next(err);
+      next(err);
     });
 };
 
@@ -46,40 +48,30 @@ module.exports.getUserId = (req, res, next) => {
         next(new ErrorNotFound('Пользователь не найден'));
       } else res.send(user);
     })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        return next(
-          new ErrorBadRequest(
-            'Переданы некорректные данные при обновлении профиля',
-          ),
-        );
-      }
-      return next(err);
-    });
+    .catch(next);
 };
 
 module.exports.editUserProfile = (req, res, next) => {
   const { name, about } = req.body;
+
   User.findByIdAndUpdate(
     req.user._id,
     { name, about },
     { new: true, runValidators: true },
   )
     .then((user) => {
-      if (!user) {
-        throw new ErrorNotFound('Пользователь не найден');
-      }
-      return res.send({ data: user });
+      res.send({ user });
     })
     .catch((err) => {
       if (err.name === 'CastError' || err.name === 'ValidationError') {
-        return next(
+        next(
           new ErrorBadRequest(
-            'При создании пользователя переданы некорректные данные',
+            'Переданы некорректные данные при обновлении профиля',
           ),
         );
+      } else {
+        next(err);
       }
-      return next(err);
     });
 };
 
@@ -93,31 +85,32 @@ module.exports.updateUserAvatar = (req, res, next) => {
     .then((user) => {
       if (!user) {
         next(new ErrorNotFound('Пользователь не найден.'));
-      } else res.send({ data: user });
+      } else res.send(user);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return next(
+        next(
           new ErrorBadRequest(
             'При обновлении аватара данные переданы некорректно',
           ),
         );
+      } else {
+        next(err);
       }
-      return next(err);
     });
 };
 
 module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
+
   User.findUserByCredentials(email, password)
     .then((user) => {
       const token = jwt.sign({ _id: user._id }, 'secret-key');
       res.cookie('jwt', token, {
         maxAge: 3600000 * 24 * 7,
         httpOnly: true,
-        sameSite: true,
       });
-      res.send({ data: user.toJSON() });
+      res.send({ data: token });
     })
     .catch(next);
 };

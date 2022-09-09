@@ -1,7 +1,8 @@
 const Card = require('../models/cards');
-const ErrorBadRequest = require('../errors/constants/ErrorBadRequest');
-const ErrorNotFound = require('../errors/constants/ErrorNotFound');
-const ForbiddenError = require('../errors/constants/ForbiddenError');
+
+const ErrorBadRequest = require('../errors/ErrorBadRequest');
+const ErrorNotFound = require('../errors/ErrorNotFound');
+const ForbiddenError = require('../errors/ForbiddenError');
 
 module.exports.getCards = (req, res, next) => {
   Card.find({})
@@ -13,6 +14,7 @@ module.exports.getCards = (req, res, next) => {
 
 module.exports.createCard = (req, res, next) => {
   const { name, link, owner = req.user._id } = req.body;
+
   Card.create({ name, link, owner })
     .then((card) => res.send({ card }))
     .catch((err) => {
@@ -41,12 +43,7 @@ module.exports.deleteCard = (req, res, next) => {
         });
       }
     })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        return next(new ErrorBadRequest('Данные переданы некорректно'));
-      }
-      return next(err);
-    });
+    .catch(next);
 };
 
 module.exports.likeCard = (req, res, next) => {
