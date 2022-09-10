@@ -11,10 +11,10 @@ const {
 userRouter.get('/', getUsers);
 
 userRouter.get(
-  '/:userId',
+  '/:id',
   celebrate({
     params: Joi.object().keys({
-      userId: Joi.string().hex().length(24),
+      userId: Joi.string().regex(/^(https?:\/\/)?([\da-z.-]+).([a-z.]{2,6})([/\w.-]*)*\/?$/),
     }),
   }),
   getUserId,
