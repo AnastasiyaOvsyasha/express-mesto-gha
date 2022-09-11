@@ -8,20 +8,9 @@ const app = express();
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const { celebrate, Joi, errors } = require('celebrate');
-const { router } = require('./routes/cards');
-const { userRouter } = require('./routes/users');
 const auth = require('./middlewares/auth');
 const { createUser, login } = require('./controllers/users');
 const { ErrorNotFound } = require('./errors/ErrorNotFound');
-
-app.use((err, req, res, next) => {
-  const { statusCode = 500, message } = err;
-
-  res.status(statusCode).send({
-    message: statusCode === 500 ? 'Произошла ошибка на сервере' : message,
-  });
-  next(err);
-});
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -46,7 +35,8 @@ app.post(
       about: Joi.string().min(2).max(30),
       avatar: Joi.string().regex(
         /^(https?:\/\/)?([\da-z.-]+).([a-z.]{2,6})([/\w.-]*)*\/?$/,
-      ),
+      )
+        .default('https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png'),
       password: Joi.string().required(),
       email: Joi.string().required().email(),
     }),
@@ -54,13 +44,25 @@ app.post(
   createUser,
 );
 
-app.use(router);
-app.use(userRouter);
+app.use(auth);
+
+app.use('/cards', require('./routes/cards'));
+app.use('/users', require('./routes/users'));
+
 app.use('*', (req, res, next) => {
   next(new ErrorNotFound('Страница не найдена'));
 });
+
 app.use(errors());
-app.use(auth);
+
+app.use((err, req, res, next) => {
+  const { statusCode = 500, message } = err;
+
+  res.status(statusCode).send({
+    message: statusCode === 500 ? 'Произошла ошибка на сервере' : message,
+  });
+  next(err);
+});
 
 // подключаемся к серверу mongo
 async function main(req, res, next) {
