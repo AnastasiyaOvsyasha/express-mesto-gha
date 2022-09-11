@@ -13,9 +13,13 @@ const { PORT = 3000 } = process.env;
 const app = express();
 
 app.use((err, req, res, next) => {
-  const statusCode = err.statusCode || 500;
-  const message = statusCode === 500 ? 'На сервере произошла ошибка' : err.message;
-  res.status(statusCode).send({ message });
+  const { statusCode = 500, message } = err;
+
+  res.status(statusCode).send({
+    message: statusCode === 500
+      ? 'Произошла ошибка на сервере'
+      : message,
+  });
   next(err);
 });
 
@@ -52,7 +56,7 @@ app.post(
   createUser,
 );
 
-app.use('/*', (req, res, next) => next(new ErrorNotFound('Страница не найдена')));
+app.use('*', (req, res, next) => next(new ErrorNotFound('Страница не найдена')));
 app.use(errors());
 app.use(auth);
 
