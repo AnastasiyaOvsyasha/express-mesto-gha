@@ -16,16 +16,15 @@ module.exports.createCard = (req, res, next) => {
   const { name, link, owner = req.user._id } = req.body;
 
   Card.create({ name, link, owner })
-    .then((card) => res.send({ card }))
+    .then((card) => {
+      res.status(200).send({ data: card });
+    })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return next(
-          new ErrorBadRequest(
-            'При создании карточки данные переданы некорректно',
-          ),
-        );
+        next(new ErrorBadRequest('При создании карточки данные переданы некорректно'));
+      } else {
+        next(err);
       }
-      return next(err);
     });
 };
 
@@ -53,7 +52,7 @@ module.exports.likeCard = (req, res, next) => {
     { new: true },
   )
     .then((card) => {
-      if (card) {
+      if (!card) {
         throw new ErrorNotFound('Карточка не найдена');
       }
       return res.send({ data: card });
@@ -73,7 +72,7 @@ module.exports.dislikeCard = (req, res, next) => {
     { new: true },
   )
     .then((card) => {
-      if (card) {
+      if (!card) {
         throw new ErrorNotFound('Карточка не найдена');
       }
       return res.send({ card });
