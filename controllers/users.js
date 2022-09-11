@@ -17,6 +17,18 @@ module.exports.getUsers = async (req, res, next) => {
   }
 };
 
+module.exports.getUserInfo = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params._id);
+    if (!user) {
+      return next(new ErrorNotFound('Пользователь не найден'));
+    }
+    return res.status(200).send(user);
+  } catch (err) {
+    return next(new ServerError('Ошибка на сервере'));
+  }
+};
+
 module.exports.createUser = async (req, res, next) => {
   const {
     name, about, avatar, email, password,
