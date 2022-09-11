@@ -3,13 +3,14 @@ const Card = require('../models/cards');
 const ErrorBadRequest = require('../errors/ErrorBadRequest');
 const ErrorNotFound = require('../errors/ErrorNotFound');
 const ForbiddenError = require('../errors/ForbiddenError');
+const ServerError = require('../errors/ServerError');
 
 module.exports.getCards = async (req, res, next) => {
   try {
     const card = await Card.find({});
     return res.status(200).send(card);
   } catch (err) {
-    return next(new ErrorNotFound('Ошибка на сервере'));
+    return next(new ServerError('Ошибка на сервере'));
   }
 };
 
@@ -25,7 +26,7 @@ module.exports.createCard = async (req, res, next) => {
         new ErrorBadRequest('При создании карточки данные переданы некорректно'),
       );
     }
-    return next(new ErrorNotFound('Ошибка на сервере'));
+    return next(new ServerError('Ошибка на сервере'));
   }
 };
 
@@ -43,7 +44,7 @@ module.exports.deleteCard = async (req, res, next) => {
     if (err.name === 'CastError') {
       return next(new ErrorBadRequest('Некорректные данные запроса'));
     }
-    return next(new ErrorNotFound('Ошибка на сервере'));
+    return next(new ServerError('Ошибка на сервере'));
   }
 };
 
@@ -62,7 +63,7 @@ module.exports.likeCard = async (req, res, next) => {
     if (err.name === 'CastError' || err.name === 'ValidationError') {
       return next(new ErrorBadRequest('Данные переданы некорректно'));
     }
-    return next(new ErrorNotFound('Ошибка на сервере'));
+    return next(new ServerError('Ошибка на сервере'));
   }
 };
 
@@ -81,6 +82,6 @@ module.exports.dislikeCard = async (req, res, next) => {
     if (err.name === 'CastError' || err.name === 'ValidationError') {
       return next(new ErrorBadRequest('Данные переданы некорректно'));
     }
-    return next(new ErrorNotFound('Ошибка на сервере'));
+    return next(new ServerError('Ошибка на сервере'));
   }
 };

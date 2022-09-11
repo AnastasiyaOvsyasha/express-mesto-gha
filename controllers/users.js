@@ -6,6 +6,7 @@ const ErrorBadRequest = require('../errors/ErrorBadRequest');
 const ErrorNotFound = require('../errors/ErrorNotFound');
 const ErrorConflict = require('../errors/ErrorConflict');
 const AuthorizationError = require('../errors/AuthorizationError');
+const ServerError = require('../errors/ServerError');
 
 module.exports.getUsers = async (req, res, next) => {
   try {
@@ -42,7 +43,7 @@ module.exports.createUser = async (req, res, next) => {
     } if (err.code === 11000) {
       return next(new ErrorConflict('Данный email уже зарегестрирован'));
     }
-    return next(new ErrorNotFound('Ошибка на сервере'));
+    return next(new ServerError('Ошибка на сервере'));
   }
 };
 
@@ -57,7 +58,7 @@ module.exports.getUserId = async (req, res, next) => {
     if (err.name === 'CastError') {
       return next(new ErrorBadRequest('При создании пользователя переданы некорректные данные'));
     }
-    return next(new ErrorNotFound('Ошибка на сервере'));
+    return next(new ServerError('Ошибка на сервере'));
   }
 };
 
@@ -80,7 +81,7 @@ module.exports.editUserProfile = async (req, res, next) => {
           'Переданы некорректные данные при обновлении профиля',
         ),
       );
-    } return next(new ErrorNotFound('Ошибка на сервере'));
+    } return next(new ServerError('Ошибка на сервере'));
   }
 };
 
@@ -103,7 +104,7 @@ module.exports.updateUserAvatar = async (req, res, next) => {
           'При обновлении аватара данные переданы некорректно',
         ),
       );
-    } return next(new ErrorNotFound('Ошибка на сервере'));
+    } return next(new ServerError('Ошибка на сервере'));
   }
 };
 

@@ -10,7 +10,8 @@ const cookieParser = require('cookie-parser');
 const { celebrate, Joi, errors } = require('celebrate');
 const auth = require('./middlewares/auth');
 const { createUser, login } = require('./controllers/users');
-const { ErrorNotFound } = require('./errors/ErrorNotFound');
+const ErrorNotFound = require('./errors/ErrorNotFound');
+const ServerError = require('./errors/ServerError');
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -73,7 +74,7 @@ async function main(req, res, next) {
     });
     await app.listen(PORT);
   } catch (error) {
-    next(new ErrorNotFound('Ошибка на сервере'));
+    next(new ServerError('Ошибка на сервере'));
   }
 }
 
