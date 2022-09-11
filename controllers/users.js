@@ -5,112 +5,127 @@ const User = require('../models/users');
 const ErrorBadRequest = require('../errors/ErrorBadRequest');
 const ErrorNotFound = require('../errors/ErrorNotFound');
 const ErrorConflict = require('../errors/ErrorConflict');
+const AuthorizationError = require('../errors/AuthorizationError');
 
-module.exports.getUsers = (req, res, next) => {
-  User.find({})
-    .then((users) => res.send({ data: users }))
-    .catch(next);
+module.exports.getUsers = async (req, res, next) => {
+  try {
+    const users = await User.find({});
+    return res.status(200).send(users);
+  } catch (err) {
+    return next(new ErrorNotFound('Ошибка на сервере'));
+  }
 };
 
-module.exports.createUser = (req, res, next) => {
+module.exports.createUser = async (req, res, next) => {
   const {
     name, about, avatar, email, password,
   } = req.body;
 
-  bcrypt
-    .hash(password, 10)
-    .then((hash) => User.create({
+  try {
+    const hash = await bcrypt
+      .hash(password, 10);
+    const user = await User.create({
       name,
       about,
       avatar,
       email,
       password: hash,
-    }))
-    .then((user) => res.send({ data: user }))
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        next(
-          new ErrorBadRequest(
-            'При создании пользователя переданы некорректные данные',
-          ),
-        );
-      } else if (err.code === 11000) {
-        next(new ErrorConflict('Данный email уже зарегестрирован'));
-      }
-      next(err);
     });
+    return res.status(200).send(user);
+  } catch (err) {
+    if (err.name === 'ValidationError') {
+      return next(
+        new ErrorBadRequest(
+          'При создании пользователя переданы некорректные данные',
+        ),
+      );
+    } if (err.code === 11000) {
+      return next(new ErrorConflict('Данный email уже зарегестрирован'));
+    }
+    return next(new ErrorNotFound('Ошибка на сервере'));
+  }
 };
 
-module.exports.getUserId = (req, res, next) => {
-  User.findById(req.params.userId)
-    .then((user) => {
-      if (user) {
-        next(new ErrorNotFound('Пользователь не найден'));
-      } else res.send(user);
-    })
-    .catch(next);
+module.exports.getUserId = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.userId);
+    if (!user) {
+      return next(new ErrorNotFound('Пользователь не найден'));
+    }
+    return res.status(200).send(user);
+  } catch (err) {
+    if (err.name === 'CastError') {
+      return next(new ErrorBadRequest('При создании пользователя переданы некорректные данные'));
+    }
+    return next(new ErrorNotFound('Ошибка на сервере'));
+  }
 };
 
-module.exports.editUserProfile = (req, res, next) => {
+module.exports.editUserProfile = async (req, res, next) => {
   const { name, about } = req.body;
-
-  User.findByIdAndUpdate(
-    req.user._id,
-    { name, about },
-    { new: true, runValidators: true },
-  )
-    .then((user) => {
-      res.send({ user });
-    })
-    .catch((err) => {
-      if (err.name === 'CastError' || err.name === 'ValidationError') {
-        next(
-          new ErrorBadRequest(
-            'Переданы некорректные данные при обновлении профиля',
-          ),
-        );
-      } else {
-        next(err);
-      }
-    });
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { name, about },
+      { new: true, runValidators: true },
+    );
+    if (!user) {
+      return next(new ErrorNotFound('Ошибка на сервере'));
+    }
+    return res.status(200).send(user);
+  } catch (err) {
+    if (err.name === 'CastError' || err.name === 'ValidationError') {
+      return next(
+        new ErrorBadRequest(
+          'Переданы некорректные данные при обновлении профиля',
+        ),
+      );
+    } return next(new ErrorNotFound('Ошибка на сервере'));
+  }
 };
 
-module.exports.updateUserAvatar = (req, res, next) => {
+module.exports.updateUserAvatar = async (req, res, next) => {
   const { avatar } = req.body;
-  User.findByIdAndUpdate(
-    req.user._id,
-    { avatar },
-    { new: true, runValidators: true },
-  )
-    .then((user) => {
-      if (!user) {
-        next(new ErrorNotFound('Пользователь не найден.'));
-      } else res.send(user);
-    })
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        next(
-          new ErrorBadRequest(
-            'При обновлении аватара данные переданы некорректно',
-          ),
-        );
-      } else {
-        next(err);
-      }
-    });
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { avatar },
+      { new: true, runValidators: true },
+    );
+    if (!user) {
+      return next(new ErrorNotFound('Пользователь не найден'));
+    }
+    return res.status(200).send(user);
+  } catch (err) {
+    if (err.name === 'ValidationError') {
+      return next(
+        new ErrorBadRequest(
+          'При обновлении аватара данные переданы некорректно',
+        ),
+      );
+    } return next(new ErrorNotFound('Ошибка на сервере'));
+  }
 };
 
-module.exports.login = (req, res, next) => {
+module.exports.login = async (req, res, next) => {
   const { email, password } = req.body;
-
-  User.findUserByCredentials(email, password)
-    .then((user) => {
-      const token = jwt.sign({ _id: user._id }, 'secret-key');
-      res.cookie('jwt', token, {
-        maxAge: 3600000 * 24 * 7,
-        httpOnly: true,
-      });
-      res.send({ data: token });
-    })
-    .catch(next);
+  try {
+    const user = await User.findOne({ email }).select('+password');
+    if (!user) {
+      return next(new AuthorizationError('Неправильные почта или пароль'));
+    }
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      return next(new AuthorizationError('Неправильные почта или пароль'));
+    }
+    const token = jwt.sign({ _id: user._id }, 'secret-key');
+    res.cookie('jwt', token, {
+      maxAge: 3600000 * 24 * 7,
+      httpOnly: true,
+      sameSite: true,
+    });
+    return res.status(200).send(user);
+  } catch (err) {
+    return next(new ErrorNotFound('Ошибка на сервере'));
+  }
 };

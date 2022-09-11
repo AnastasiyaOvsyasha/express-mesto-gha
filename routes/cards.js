@@ -22,10 +22,10 @@ router.post(
   createCard,
 );
 
-router.get('/', getCards);
+router.get('/cards', getCards);
 
 router.delete(
-  '/:cardId',
+  'cards/:cardId',
   celebrate({
     params: Joi.object().keys({
       cardId: Joi.string().regex(/^[0-9a-f]{24}$/i),
@@ -35,7 +35,7 @@ router.delete(
 );
 
 router.put(
-  '/:cardId/likes',
+  'cards/:cardId/likes',
   celebrate({
     params: Joi.object().keys({
       cardId: Joi.string().regex(/^[0-9a-f]{24}$/i),
@@ -45,7 +45,7 @@ router.put(
 );
 
 router.delete(
-  '/:cardId/likes',
+  'cards/:cardId/likes',
   celebrate({
     params: Joi.object().keys({
       cardId: Joi.string().regex(/^[0-9a-f]{24}$/i),

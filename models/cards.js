@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const isURL = require('validator');
 
 const cardSchema = new mongoose.Schema({
   name: {
@@ -12,7 +11,10 @@ const cardSchema = new mongoose.Schema({
     type: String,
     required: true,
     validate: {
-      validator: (v) => isURL(v),
+      validator(v) {
+        // eslint-disable-next-line no-useless-escape
+        return /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/.test(v);
+      },
       message: 'Неверный url, проверьте правильность ссылки',
     },
   },

@@ -6,17 +6,23 @@ const { celebrate, Joi, errors } = require('celebrate');
 const { createUser, login } = require('./controllers/users');
 const { ErrorNotFound } = require('./errors/ErrorNotFound');
 
+const auth = require('./middlewares/auth');
+
 const { PORT = 3000 } = process.env;
 
-// подключаемся к серверу mongo
-mongoose.connect('mongodb://localhost:27017/mestodb', {
-  useNewUrlParser: true,
-});
 const app = express();
+
+app.use((err, req, res, next) => {
+  const statusCode = err.statusCode || 500;
+  const message = statusCode === 500 ? 'На сервере произошла ошибка' : err.message;
+  res.status(statusCode).send({ message });
+  next(err);
+});
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
-
+app.use(express.json());
 app.use('/cards', require('./routes/cards'));
 app.use('/users', require('./routes/users'));
 
@@ -48,8 +54,18 @@ app.post(
 
 app.use('/*', (req, res, next) => next(new ErrorNotFound('Страница не найдена')));
 app.use(errors());
+app.use(auth);
 
-app.listen(PORT, () => {
-  // eslint-disable-next-line no-console
-  console.log(`App listening on port ${PORT}`);
-});
+// подключаемся к серверу mongo
+async function main(req, res, next) {
+  try {
+    await mongoose.connect('mongodb://localhost:27017/mestodb', {
+      useNewUrlParser: true,
+    });
+    await app.listen(PORT);
+  } catch (error) {
+    next(new ErrorNotFound('Ошибка на сервере'));
+  }
+}
+
+main();
