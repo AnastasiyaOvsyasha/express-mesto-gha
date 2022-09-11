@@ -7,11 +7,11 @@ const auth = (req, res, next) => {
   try {
     payload = jwt.verify(token, 'secret-key');
   } catch (err) {
-    return next(new AuthorizationError('Необходимо авторизоваться'));
+    next(new AuthorizationError('Необходимо авторизоваться'));
   }
 
   req.user = payload;
-  return next();
+  next();
 };
 
 module.exports = auth;

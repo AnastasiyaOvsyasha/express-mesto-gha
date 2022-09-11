@@ -1,24 +1,24 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');
-const { celebrate, Joi, errors } = require('celebrate');
-const { createUser, login } = require('./controllers/users');
-const { ErrorNotFound } = require('./errors/ErrorNotFound');
-
-const auth = require('./middlewares/auth');
 
 const { PORT = 3000 } = process.env;
 
 const app = express();
 
+const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
+const { celebrate, Joi, errors } = require('celebrate');
+const { router } = require('./routes/cards');
+const { userRouter } = require('./routes/users');
+const auth = require('./middlewares/auth');
+const { createUser, login } = require('./controllers/users');
+const { ErrorNotFound } = require('./errors/ErrorNotFound');
+
 app.use((err, req, res, next) => {
   const { statusCode = 500, message } = err;
 
   res.status(statusCode).send({
-    message: statusCode === 500
-      ? 'Произошла ошибка на сервере'
-      : message,
+    message: statusCode === 500 ? 'Произошла ошибка на сервере' : message,
   });
   next(err);
 });
@@ -27,8 +27,6 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.json());
-app.use('/cards', require('./routes/cards'));
-app.use('/users', require('./routes/users'));
 
 app.post(
   '/signin',
@@ -56,7 +54,11 @@ app.post(
   createUser,
 );
 
-app.use('*', (req, res, next) => next(new ErrorNotFound('Страница не найдена')));
+app.use(router);
+app.use(userRouter);
+app.use('*', (req, res, next) => {
+  next(new ErrorNotFound('Страница не найдена'));
+});
 app.use(errors());
 app.use(auth);
 
@@ -65,6 +67,7 @@ async function main(req, res, next) {
   try {
     await mongoose.connect('mongodb://localhost:27017/mestodb', {
       useNewUrlParser: true,
+      useUnifiedTopology: false,
     });
     await app.listen(PORT);
   } catch (error) {

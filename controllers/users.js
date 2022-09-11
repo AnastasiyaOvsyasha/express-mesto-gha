@@ -120,7 +120,6 @@ module.exports.login = async (req, res, next) => {
     }
     const token = jwt.sign({ _id: user._id }, 'secret-key');
     res.cookie('jwt', token, {
-      maxAge: 3600000 * 24 * 7,
       httpOnly: true,
       sameSite: true,
     });
