@@ -26,23 +26,18 @@ module.exports.createUser = (req, res, next) => {
       email,
       password: hash,
     }))
-    .then((user) => res.status(201).send({
-      name: user.name,
-      about: user.about,
-      avatar: user.avatar,
-      email: user.email,
-    }))
+    .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return next(
+        next(
           new ErrorBadRequest(
             'При создании пользователя переданы некорректные данные',
           ),
         );
-      } if (err.code === 11000) {
-        return next(new ErrorConflict('Данный email уже зарегестрирован'));
+      } else if (err.code === 11000) {
+        next(new ErrorConflict('Данный email уже зарегестрирован'));
       }
-      return next(err);
+      next(err);
     });
 };
 
