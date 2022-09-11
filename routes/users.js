@@ -8,10 +8,10 @@ const {
   updateUserAvatar,
 } = require('../controllers/users');
 
-userRouter.get('/users', getUsers);
+userRouter.get('/', getUsers);
 
 userRouter.get(
-  'users/:userId',
+  '/:userId',
   celebrate({
     params: Joi.object().keys({
       userId: Joi.string().regex(/^(https?:\/\/)?([\da-z.-]+).([a-z.]{2,6})([/\w.-]*)*\/?$/),
@@ -21,7 +21,7 @@ userRouter.get(
 );
 
 userRouter.patch(
-  'users/me',
+  '/me',
   celebrate({
     body: Joi.object().keys({
       name: Joi.string().required().min(2).max(30),
@@ -32,7 +32,7 @@ userRouter.patch(
 );
 
 userRouter.patch(
-  'users/me/avatar',
+  '/me/avatar',
   celebrate({
     body: Joi.object().keys({
       avatar: Joi.string()
