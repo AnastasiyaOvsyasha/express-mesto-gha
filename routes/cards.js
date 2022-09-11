@@ -22,7 +22,7 @@ router.post(
   createCard,
 );
 
-router.get('/cards', getCards);
+router.get('/', getCards);
 
 router.delete(
   '/:cardId',
