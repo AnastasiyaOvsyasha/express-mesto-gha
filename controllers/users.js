@@ -61,8 +61,9 @@ module.exports.createUser = async (req, res, next) => {
 };
 
 module.exports.getUserId = async (req, res, next) => {
+  const { userId } = req.params;
   try {
-    const user = await User.findById(req.params.userId);
+    const user = await User.findById(userId);
     if (!user) {
       return next(new ErrorNotFound('Пользователь не найден'));
     }
