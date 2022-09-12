@@ -36,8 +36,7 @@ app.post(
       about: Joi.string().min(2).max(30),
       avatar: Joi.string().regex(
         /^(https?:\/\/)?([\da-z.-]+).([a-z.]{2,6})([/\w.-]*)*\/?$/,
-      )
-        .default('https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png'),
+      ),
       password: Joi.string().required(),
       email: Joi.string().required().email(),
     }),
