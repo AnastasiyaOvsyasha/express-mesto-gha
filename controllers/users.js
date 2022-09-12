@@ -136,6 +136,7 @@ module.exports.login = async (req, res, next) => {
     res.cookie('jwt', token, {
       httpOnly: true,
       sameSite: true,
+      token: `JWT${token}`,
     });
     return res.status(200).send(user);
   } catch (err) {
