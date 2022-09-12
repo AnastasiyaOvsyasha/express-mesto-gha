@@ -18,9 +18,8 @@ module.exports.getUsers = async (req, res, next) => {
 };
 
 module.exports.getUserInfo = async (req, res, next) => {
-  const id = req.user._id;
   try {
-    const user = await User.findById(id);
+    const user = await User.findById(req.params.userId);
     if (!user) {
       return next(new ErrorNotFound('Пользователь не найден'));
     }
@@ -61,9 +60,8 @@ module.exports.createUser = async (req, res, next) => {
 };
 
 module.exports.getUserId = async (req, res, next) => {
-  const { userId } = req.params;
   try {
-    const user = await User.findById(userId);
+    const user = await User.findById(req.params.userId);
     if (!user) {
       return next(new ErrorNotFound('Пользователь не найден'));
     }
