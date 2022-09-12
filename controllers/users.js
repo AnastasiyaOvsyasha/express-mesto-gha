@@ -138,6 +138,6 @@ module.exports.login = async (req, res, next) => {
     });
     return res.status(200).send(user);
   } catch (err) {
-    return next(new ErrorNotFound('Ошибка на сервере'));
+    return next(new ServerError('Ошибка на сервере'));
   }
 };
