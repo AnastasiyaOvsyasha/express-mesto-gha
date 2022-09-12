@@ -16,7 +16,7 @@ userRouter.get(
   '/:userId',
   celebrate({
     params: Joi.object().keys({
-      userId: Joi.string().regex(/^(https?:\/\/)?([\da-z.-]+).([a-z.]{2,6})([/\w.-]*)*\/?$/),
+      userId: Joi.string().regex(/^[0-9a-f]{24}$/i),
     }),
   }),
   getUserId,
