@@ -18,8 +18,9 @@ module.exports.getUsers = async (req, res, next) => {
 };
 
 module.exports.getUserInfo = async (req, res, next) => {
+  const id = req.user._id;
   try {
-    const user = await User.findById(req.params.userId);
+    const user = await User.findById(id);
     if (!user) {
       return next(new ErrorNotFound('Пользователь не найден'));
     }
