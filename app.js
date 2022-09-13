@@ -1,10 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
 
-const { PORT = 3000 } = process.env;
-
-const app = express();
-
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const { celebrate, Joi, errors } = require('celebrate');
@@ -12,6 +8,10 @@ const auth = require('./middlewares/auth');
 const { createUser, login } = require('./controllers/users');
 const ErrorNotFound = require('./errors/ErrorNotFound');
 const ErrorServer = require('./errors/ErrorServer');
+
+const { PORT = 3000 } = process.env;
+
+const app = express();
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -56,12 +56,10 @@ app.use('*', (req, res, next) => {
 app.use(errors());
 
 app.use((err, req, res, next) => {
-  const { statusCode = 500, message } = err;
-
-  res.status(statusCode).send({
-    message: statusCode === 500 ? 'Произошла ошибка на сервере' : message,
-  });
-  next(err);
+  const statusCode = err.statusCode || 500;
+  const message = statusCode === 500 ? 'На сервере произошла ошибка' : err.message;
+  res.status(statusCode).send({ message });
+  next();
 });
 
 // подключаемся к серверу mongo
