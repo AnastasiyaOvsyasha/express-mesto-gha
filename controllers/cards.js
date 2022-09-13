@@ -55,7 +55,7 @@ module.exports.likeCard = (req, res, next) => {
     { new: true, runValidators: true },
   )
     .then((card) => {
-      if (!card) {
+      if (card) {
         return res.send(card);
       }
       return next(new ErrorNotFound('Карточка не найдена'));
@@ -75,7 +75,7 @@ module.exports.dislikeCard = (req, res, next) => {
     { new: true, runValidators: true },
   )
     .then((card) => {
-      if (!card) {
+      if (card) {
         return res.send(card);
       }
       return next(new ErrorNotFound('Карточка не найдена'));
