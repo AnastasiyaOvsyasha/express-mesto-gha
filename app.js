@@ -11,7 +11,7 @@ const { celebrate, Joi, errors } = require('celebrate');
 const auth = require('./middlewares/auth');
 const { createUser, login } = require('./controllers/users');
 const ErrorNotFound = require('./errors/ErrorNotFound');
-const ServerError = require('./errors/ServerError');
+const ErrorServer = require('./errors/ErrorServer');
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -73,7 +73,7 @@ async function main(req, res, next) {
     });
     await app.listen(PORT);
   } catch (error) {
-    next(new ServerError('Ошибка на сервере'));
+    next(new ErrorServer('Ошибка на сервере'));
   }
 }
 

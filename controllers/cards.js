@@ -3,31 +3,31 @@ const Card = require('../models/cards');
 const ErrorBadRequest = require('../errors/ErrorBadRequest');
 const ErrorNotFound = require('../errors/ErrorNotFound');
 const ForbiddenError = require('../errors/ForbiddenError');
-const ServerError = require('../errors/ServerError');
+const ErrorServer = require('../errors/ErrorServer');
 
-module.exports.getCards = async (req, res, next) => {
-  try {
-    const card = await Card.find({});
-    return res.status(200).send(card);
-  } catch (err) {
-    return next(new ServerError('Ошибка на сервере'));
-  }
+module.exports.getCards = (req, res, next) => {
+  Card.find({})
+    .then((cards) => {
+      res.send(cards);
+    })
+    .catch(() => next(new ErrorServer('Ошибка на сервере')));
 };
 
 module.exports.createCard = async (req, res, next) => {
   const { name, link, owner = req.user._id } = req.body;
 
-  try {
-    const card = await Card.create({ name, link, owner });
-    return res.status(200).send(card);
-  } catch (err) {
-    if (err.name === 'ValidationError') {
-      return next(
-        new ErrorBadRequest('При создании карточки данные переданы некорректно'),
-      );
-    }
-    return next(new ServerError('Ошибка на сервере'));
-  }
+  Card.create({ name, link, owner })
+    .then((card) => {
+      res.send(card);
+    })
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        return next(
+          new ErrorBadRequest('При создании карточки данные переданы некорректно'),
+        );
+      }
+      return next(new ErrorServer('Ошибка на сервере'));
+    });
 };
 
 module.exports.deleteCard = async (req, res, next) => {
@@ -44,44 +44,46 @@ module.exports.deleteCard = async (req, res, next) => {
     if (err.name === 'CastError') {
       return next(new ErrorBadRequest('Некорректные данные запроса'));
     }
-    return next(new ServerError('Ошибка на сервере'));
+    return next(new ErrorServer('Ошибка на сервере'));
   }
 };
 
-module.exports.likeCard = async (req, res, next) => {
-  try {
-    const card = await Card.findByIdAndUpdate(
-      req.params.cardId,
-      { $addToSet: { likes: req.user._id } },
-      { new: true, runValidators: true },
-    );
-    if (!card) {
+module.exports.likeCard = (req, res, next) => {
+  Card.findByIdAndUpdate(
+    req.params.cardId,
+    { $addToSet: { likes: req.user._id } },
+    { new: true, runValidators: true },
+  )
+    .then((card) => {
+      if (!card) {
+        return res.send(card);
+      }
       return next(new ErrorNotFound('Карточка не найдена'));
-    }
-    return res.status(200).send(card);
-  } catch (err) {
-    if (err.name === 'CastError' || err.name === 'ValidationError') {
-      return next(new ErrorBadRequest('Данные переданы некорректно'));
-    }
-    return next(new ServerError('Ошибка на сервере'));
-  }
+    })
+    .catch((err) => {
+      if (err.name === 'CastError' || err.name === 'ValidationError') {
+        return next(new ErrorBadRequest('Данные переданы некорректно'));
+      }
+      return next(new ErrorServer('Ошибка на сервере'));
+    });
 };
 
-module.exports.dislikeCard = async (req, res, next) => {
-  try {
-    const card = await Card.findByIdAndUpdate(
-      req.params.cardId,
-      { $pull: { likes: req.user._id } },
-      { new: true, runValidators: true },
-    );
-    if (!card) {
+module.exports.dislikeCard = (req, res, next) => {
+  Card.findByIdAndUpdate(
+    req.params.cardId,
+    { $pull: { likes: req.user._id } },
+    { new: true, runValidators: true },
+  )
+    .then((card) => {
+      if (!card) {
+        return res.send(card);
+      }
       return next(new ErrorNotFound('Карточка не найдена'));
-    }
-    return res.status(200).send(card);
-  } catch (err) {
-    if (err.name === 'CastError' || err.name === 'ValidationError') {
-      return next(new ErrorBadRequest('Данные переданы некорректно'));
-    }
-    return next(new ServerError('Ошибка на сервере'));
-  }
+    })
+    .catch((err) => {
+      if (err.name === 'CastError' || err.name === 'ValidationError') {
+        return next(new ErrorBadRequest('Данные переданы некорректно'));
+      }
+      return next(new ErrorServer('Ошибка на сервере'));
+    });
 };
